@@ -3,3 +3,4 @@ requests>=2.28.0
 pywin32>=300
 Pillow
 Pillow>=9.3.0
+PyQt5

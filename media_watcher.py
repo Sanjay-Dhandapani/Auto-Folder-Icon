@@ -99,6 +99,8 @@ class MediaWatcher:
         self.api = MediaAPI(config)
         self.icon_setter = WinIconSetter()
         self.observer = None
+        self.recently_processed = {}  # folder_path: last_processed_time
+        self.REPROCESS_WINDOW = 5  # seconds
     
     def watch(self, root_dir):
         """Start watching the root directory for changes."""
@@ -140,6 +142,13 @@ class MediaWatcher:
         """
         try:
             folder_path = Path(folder_path)
+            now = time.time()
+            # Avoid reprocessing the same folder within REPROCESS_WINDOW seconds
+            last_time = self.recently_processed.get(str(folder_path), 0)
+            if now - last_time < self.REPROCESS_WINDOW:
+                logger.info(f'Skipping recently processed folder: "{folder_path}"')
+                return
+            self.recently_processed[str(folder_path)] = now
             
             # Skip processing if this is the root directory
             if str(folder_path) == str(self.config.MEDIA_ROOT_DIR):
@@ -171,8 +180,10 @@ class MediaWatcher:
             media_count = len(self._get_media_files(folder_path))
             logger.info(f'Found {media_count} media files → searching "{title}"')
             
-            # Get poster image from API
-            poster_data = self.api.get_poster(title)
+            # Determine if this is a TV show (has 'Season' in path)
+            is_tv_show = any('season' in part.lower() for part in folder_path.parts)
+            # Get poster image from API (pass is_tv_show)
+            poster_data = self.api.get_poster(title, is_tv_show=is_tv_show)
             if not poster_data:
                 logger.warning(f'No poster found for "{title}" → skipping')
                 return
@@ -221,10 +232,13 @@ class MediaWatcher:
             if parent_folder.name.lower() not in ["media", "test_media"]:
                 return self._infer_title(parent_folder)
             
-        # Special case for "StrangerThings" format (camel case)
-        if re.match(r'^[A-Z][a-z]+[A-Z][a-z]+$', folder_name):
+        # Special case for "StrangerThings" or similar CamelCase (e.g., GameOfThrones)
+        if re.match(r'^[A-Z][a-z]+([A-Z][a-z]+)+$', folder_name):
             # Split CamelCase into separate words
-            return re.sub(r'([a-z])([A-Z])', r'\1 \2', folder_name)
+            cleaned = re.sub(r'([a-z])([A-Z])', r'\1 \2', folder_name)
+            # Also handle multiple uppercase letters in a row (e.g., "SNLShow")
+            cleaned = re.sub(r'([A-Z])([A-Z][a-z])', r'\1 \2', cleaned)
+            return cleaned.strip()
         
         # Remove common patterns that aren't part of the title
         patterns = [
@@ -248,3 +262,13 @@ class MediaWatcher:
         cleaned_name = re.sub(r'\s+', ' ', cleaned_name)
         
         return cleaned_name.strip()
+    
+    def scan_and_apply_icons(self, root_dir):
+        """
+        Scan all subfolders and apply icons immediately (for tray app manual scan).
+        """
+        logger.info(f"Manual scan and apply icons in: {root_dir}")
+        for dirpath, _, filenames in os.walk(root_dir):
+            media_files = [f for f in filenames if Path(f).suffix.lower() in MEDIA_EXTENSIONS]
+            if media_files:
+                self.process_folder(dirpath)

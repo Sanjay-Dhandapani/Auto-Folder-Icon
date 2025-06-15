@@ -28,6 +28,20 @@ class WinIconSetter:
         # Set attributes
         self._set_attributes(folder_path, desktop_ini_path)
 
+        # Remove Thumbs.db if present to clear icon cache
+        thumbs_db = os.path.join(folder_path, 'Thumbs.db')
+        if os.path.exists(thumbs_db):
+            try:
+                os.remove(thumbs_db)
+            except Exception as e:
+                logging.warning(f"Could not remove Thumbs.db: {e}")
+        # Toggle folder system attribute off and on to force refresh
+        try:
+            subprocess.run(["attrib", "-s", folder_path], shell=True)
+            subprocess.run(["attrib", "+s", "+r", folder_path], shell=True)
+        except Exception as e:
+            logging.warning(f"Could not toggle folder attributes: {e}")
+
     def _convert_to_ico(self, image_path, icon_path):
         try:
             # Target icon sizes (square, but poster centered)
@@ -68,8 +82,12 @@ class WinIconSetter:
             "Vid=\n"
             "FolderType=Pictures\n"
         )
-        with open(desktop_ini_path, 'w', encoding='utf-8') as f:
-            f.write(content)
+        try:
+            with open(desktop_ini_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            logging.info(f"desktop.ini written at {desktop_ini_path}")
+        except Exception as e:
+            logging.error(f"Failed to write desktop.ini at {desktop_ini_path}: {e}")
 
     def _set_attributes(self, folder_path, desktop_ini_path):
         try:
@@ -79,3 +97,24 @@ class WinIconSetter:
             subprocess.run(["attrib", "+s", "+r", folder_path], shell=True)
         except Exception as e:
             logging.error(f"Error setting attributes: {e}")
+
+    def revert_folder_icon(self, folder_path):
+        """
+        Remove custom icon, poster, and ini from the folder and reset attributes.
+        """
+        folder_path = os.path.abspath(folder_path)
+        for fname in ["folder.ico", "poster.jpg", "desktop.ini"]:
+            fpath = os.path.join(folder_path, fname)
+            if os.path.exists(fpath):
+                try:
+                    # Remove attributes if needed
+                    if fname == "desktop.ini":
+                        subprocess.run(["attrib", "-s", "-h", "-a", fpath], shell=True)
+                    os.remove(fpath)
+                except Exception as e:
+                    logging.warning(f"Could not remove {fname}: {e}")
+        # Remove system and readonly attributes from folder
+        try:
+            subprocess.run(["attrib", "-s", "-r", folder_path], shell=True)
+        except Exception as e:
+            logging.warning(f"Could not reset folder attributes: {e}")

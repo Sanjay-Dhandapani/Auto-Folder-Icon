@@ -1,12 +1,13 @@
 {
-    "MEDIA_ROOT_DIR": "d:\\PROJECTS AND FILES\\CustomIcon\\test_media",
-    "TMDB_API_KEY": "",
+    "MEDIA_ROOT_DIR": "d:\\PROJECTS AND FILES\\CustomIcon\\test_media_new",
+    "TMDB_API_KEY": "11f55c4fd9dfad72e43b1ed0dd822734",
     "OMDB_API_KEY": "",
+    "TVMAZE_API_KEY": "JitCu-HpN4p3-rErKGFImD7njPdxFV_X",
     "CACHE_DIR": "%USERPROFILE%\\.media_iconer\\cache",
     "USE_CACHE": true,
     "SCAN_ON_START": true,
     "DEBOUNCE_TIME": 1.0,
     "FORCE_UPDATE": true,
     "MAX_POSTER_SIZE": 1024,
-    "USE_MOCK_API": true
+    "USE_MOCK_API": false
 }

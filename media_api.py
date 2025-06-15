@@ -55,12 +55,47 @@ class MediaAPI:
         except Exception as e:
             logger.error(f"Error saving API cache: {e}")
     
-    def get_poster(self, title: str) -> Optional[bytes]:
+    def _get_tvmaze_poster(self, title: str) -> Optional[bytes]:
+        """
+        Get a poster from TVmaze for TV shows.
+        
+        Args:
+            title: The title to search for
+            
+        Returns:
+            Bytes of the poster image, or None if no poster was found
+        """
+        try:
+            search_url = f"https://api.tvmaze.com/singlesearch/shows"
+            params = {"q": title}
+            headers = {}
+            if hasattr(self.config, 'TVMAZE_API_KEY') and self.config.TVMAZE_API_KEY:
+                headers["Authorization"] = f"Bearer {self.config.TVMAZE_API_KEY}"
+            response = requests.get(search_url, params=params, headers=headers, timeout=10)
+            if response.status_code != 200:
+                logger.error(f"TVmaze search failed: {response.status_code} - {response.text}")
+                return None
+            result = response.json()
+            image_url = result.get("image", {}).get("original") or result.get("image", {}).get("medium")
+            if not image_url:
+                logger.info(f"No TVmaze poster found for: {title}")
+                return None
+            poster_response = requests.get(image_url, timeout=10)
+            if poster_response.status_code != 200:
+                logger.error(f"TVmaze poster download failed: {poster_response.status_code}")
+                return None
+            return self._process_poster_image(poster_response.content)
+        except Exception as e:
+            logger.error(f"Error getting TVmaze poster: {e}")
+            return None
+
+    def get_poster(self, title: str, is_tv_show: bool = False) -> Optional[bytes]:
         """
         Get a poster image for the given title.
         
         Args:
             title: The title to search for
+            is_tv_show: If True, prefer TV show APIs (TVmaze)
             
         Returns:
             Bytes of the poster image, or None if no poster was found
@@ -70,7 +105,7 @@ class MediaAPI:
             return self._get_mock_poster(title)
         
         # Check cache first
-        cache_key = f"poster_{title}"
+        cache_key = f"poster_{title}_{'tv' if is_tv_show else 'movie'}"
         if cache_key in self.response_cache and self.config.USE_CACHE:
             poster_path = self.cache_dir / f"{cache_key}.jpg"
             if poster_path.exists():
@@ -80,14 +115,21 @@ class MediaAPI:
                 except Exception as e:
                     logger.error(f"Error reading cached poster: {e}")
         
-        # First try TMDB if configured
+        # TV shows: try TVmaze first
+        if is_tv_show:
+            poster_data = self._get_tvmaze_poster(title)
+            if poster_data:
+                self._cache_poster(cache_key, poster_data)
+                return poster_data
+        
+        # Try TMDB
         if self.config.TMDB_API_KEY:
             poster_data = self._get_tmdb_poster(title)
             if poster_data:
                 self._cache_poster(cache_key, poster_data)
                 return poster_data
         
-        # Then try OMDB if configured
+        # Try OMDB
         if self.config.OMDB_API_KEY:
             poster_data = self._get_omdb_poster(title)
             if poster_data:
