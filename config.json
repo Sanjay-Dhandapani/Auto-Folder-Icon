@@ -1,0 +1,12 @@
+{
+    "MEDIA_ROOT_DIR": "d:\\PROJECTS AND FILES\\CustomIcon\\test_media",
+    "TMDB_API_KEY": "",
+    "OMDB_API_KEY": "",
+    "CACHE_DIR": "%USERPROFILE%\\.media_iconer\\cache",
+    "USE_CACHE": true,
+    "SCAN_ON_START": true,
+    "DEBOUNCE_TIME": 1.0,
+    "FORCE_UPDATE": true,
+    "MAX_POSTER_SIZE": 1024,
+    "USE_MOCK_API": true
+}
