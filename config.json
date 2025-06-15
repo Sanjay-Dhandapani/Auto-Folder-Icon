@@ -1,8 +1,9 @@
 {
-    "MEDIA_ROOT_DIR": "d:\\PROJECTS AND FILES\\CustomIcon\\test_media_new",
+    "MEDIA_ROOT_DIR": "d:\\PROJECTS AND FILES\\CustomIcon\\test_media_new2",
     "TMDB_API_KEY": "11f55c4fd9dfad72e43b1ed0dd822734",
-    "OMDB_API_KEY": "",
+    "OMDB_API_KEY": "1d276b93",
     "TVMAZE_API_KEY": "JitCu-HpN4p3-rErKGFImD7njPdxFV_X",
+    "ANILIST_API_KEY": "7sNo65ylLMUD4TekDZuynf8qUW77hRlOc67eaAi5",
     "CACHE_DIR": "%USERPROFILE%\\.media_iconer\\cache",
     "USE_CACHE": true,
     "SCAN_ON_START": true,

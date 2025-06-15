@@ -149,53 +149,56 @@ class MediaWatcher:
                 logger.info(f'Skipping recently processed folder: "{folder_path}"')
                 return
             self.recently_processed[str(folder_path)] = now
-            
+
             # Skip processing if this is the root directory
             if str(folder_path) == str(self.config.MEDIA_ROOT_DIR):
                 return
-            
+
             # Check if the folder contains media files
             if not self._contains_media_files(folder_path):
                 logger.info(f'No media in "{folder_path}" → skipping')
                 return
-            
-            # Check if poster.jpg and desktop.ini already exist and are recent
-            poster_path = folder_path / "poster.jpg"
-            desktop_ini_path = folder_path / "desktop.ini"
-            
-            # If both exist and are recent (within the last 30 days), skip processing
+
+            import re
+            is_season_folder = re.search(r'^Season\s*\d+$', folder_path.name, re.IGNORECASE) is not None
+
+            # If this is a season folder, set the parent folder as the target for the icon
+            target_folder = folder_path.parent if is_season_folder else folder_path
+            # Mark parent as recently processed to avoid duplicate work
+            if is_season_folder:
+                self.recently_processed[str(target_folder)] = now
+
+            # Check if poster.jpg and desktop.ini already exist and are recent in the target folder
+            poster_path = target_folder / "poster.jpg"
+            desktop_ini_path = target_folder / "desktop.ini"
             if (poster_path.exists() and desktop_ini_path.exists() and 
                     time.time() - poster_path.stat().st_mtime < 30 * 24 * 60 * 60 and
                     not self.config.FORCE_UPDATE):
-                logger.info(f'Poster already exists in "{folder_path}" → skipping')
+                logger.info(f'Poster already exists in "{target_folder}" → skipping')
                 return
-            
-            # Infer the title from the folder name
-            title = self._infer_title(folder_path)
+
+            # Infer the title from the target folder name
+            title = self._infer_title(target_folder)
             if not title:
-                logger.info(f'Could not infer title from "{folder_path}" → skipping')
+                logger.info(f'Could not infer title from "{target_folder}" → skipping')
                 return
-            
-            logger.info(f'Detected folder "{folder_path}"')
+
+            logger.info(f'Detected folder "{target_folder}"')
             media_count = len(self._get_media_files(folder_path))
-            logger.info(f'Found {media_count} media files → searching "{title}"')
-            
-            # Determine if this is a TV show (has 'Season' in path)
+            logger.info(f'Found {media_count} media files → searching "{title}"')            # Determine if this is a TV show (has 'Season' in path)
             is_tv_show = any('season' in part.lower() for part in folder_path.parts)
-            # Get poster image from API (pass is_tv_show)
-            poster_data = self.api.get_poster(title, is_tv_show=is_tv_show)
+            
+            # Determine if this is likely anime based on common terms or patterns
+            is_anime = self._is_likely_anime(title, folder_path)
+            
+            poster_data = self.api.get_poster(title, is_tv_show=is_tv_show, is_anime=is_anime)
             if not poster_data:
                 logger.warning(f'No poster found for "{title}" → skipping')
                 return
-              # Save the poster image
             with open(poster_path, 'wb') as f:
                 f.write(poster_data)
-            
-            # Set the folder icon
-            self.icon_setter.set_folder_icon(str(folder_path), "poster.jpg")
-            
-            logger.info(f'Downloaded poster.jpg → updated desktop.ini → icon set')
-            
+            self.icon_setter.set_folder_icon(str(target_folder), "poster.jpg")
+            logger.info(f'Downloaded poster.jpg → updated desktop.ini → icon set for "{target_folder}"')
         except Exception as e:
             logger.error(f"Error processing folder {folder_path}: {e}")
     
@@ -262,6 +265,84 @@ class MediaWatcher:
         cleaned_name = re.sub(r'\s+', ' ', cleaned_name)
         
         return cleaned_name.strip()
+    
+    def _is_likely_anime(self, title, folder_path) -> bool:
+        """
+        Determine if the media is likely anime based on title and folder path.
+        
+        Args:
+            title: The inferred title of the media
+            folder_path: The path to the media folder
+            
+        Returns:
+            True if the media is likely anime, False otherwise
+        """
+        # Convert to lowercase for case-insensitive matching
+        title_lower = title.lower()
+        path_str = str(folder_path).lower()
+        
+        # Common anime-related terms
+        anime_terms = [
+            'anime', 'manga', 'subbed', 'dubbed', 'sub', 'dub',
+            'season', 'episode', 'ova', 'special', 'movie',
+            'chan', 'kun', 'san', 'sama', 'sensei',
+            'otaku', 'weeaboo', 'weeb',
+        ]
+        
+        # Popular anime titles for direct matching
+        popular_anime = [
+            'attack on titan', 'shingeki no kyojin', 'one piece', 'naruto', 'bleach',
+            'my hero academia', 'boku no hero', 'dragon ball', 'sword art online',
+            'death note', 'fullmetal alchemist', 'demon slayer', 'kimetsu no yaiba',
+            'tokyo ghoul', 'hunter x hunter', 'cowboy bebop', 'one punch man',
+            'jojo', 'evangelion', 'pokemon', 'fairy tail', 'code geass', 'steins gate',
+            'your name', 'kimi no na wa', 'studio ghibli', 'miyazaki',
+            'jujutsu kaisen', 'chainsaw man', 'spy x family', 'mob psycho',
+            'attack on titan', 'my hero academia'
+        ]
+        
+        # Check for direct match with popular anime titles
+        for anime in popular_anime:
+            if anime in title_lower:
+                return True
+        
+        # Check for common anime studios/publishers
+        anime_studios = [
+            'toei', 'madhouse', 'bones', 'shaft', 'trigger',
+            'gainax', 'kyoto animation', 'production i.g', 'a-1 pictures',
+            'wit studio', 'ufotable', 'mappa', 'crunchyroll', 'funimation',
+        ]
+        
+        # Common anime name patterns
+        anime_patterns = [
+            r'[\[\(](BD|720p|1080p)[\]\)]',  # Common anime release format
+            r'S\d+E\d+',                     # Season/Episode format
+            r'[\[\(](Sub|Dub)[\]\)]',        # Sub/Dub indicator
+            r'\d+\s*-\s*\d+',                # Episode range
+            r'[\[\(](?:Complete|Batch)[\]\)]',  # Complete or batch collection
+        ]
+        
+        # Check terms
+        for term in anime_terms:
+            if term in title_lower or term in path_str:
+                return True
+        
+        # Check studios
+        for studio in anime_studios:
+            if studio in title_lower or studio in path_str:
+                return True
+        
+        # Check patterns
+        import re
+        for pattern in anime_patterns:
+            if re.search(pattern, str(folder_path)):
+                return True
+        
+        # Check for common anime folders/categories
+        if 'anime' in path_str or 'japanese' in path_str:
+            return True
+            
+        return False
     
     def scan_and_apply_icons(self, root_dir):
         """

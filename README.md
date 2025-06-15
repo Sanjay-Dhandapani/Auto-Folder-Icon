@@ -7,7 +7,8 @@ A Windows desktop utility that automatically sets folder icons for media content
 - Monitors a root "Media" folder (and all its subfolders) in the background
 - Detects folders containing video or audio files
 - Parses folder names to infer the media title
-- Fetches poster images from TMDB or OMDB
+- Fetches poster images from TMDB, OMDB, TVmaze, or AniList
+- Intelligently detects media type (TV show, movie, or anime)
 - Sets the poster as the folder icon using desktop.ini
 - Runs as a background service (auto-starts on login)
 
@@ -17,7 +18,11 @@ A Windows desktop utility that automatically sets folder icons for media content
 
 - Python 3.7 or higher
 - Windows 10 or higher
-- API key from TMDB (https://www.themoviedb.org/settings/api) or OMDB (https://www.omdbapi.com/apikey.aspx)
+- API keys from one or more of the following:
+  - TMDB (https://www.themoviedb.org/settings/api)
+  - OMDB (https://www.omdbapi.com/apikey.aspx)
+  - TVmaze (https://www.tvmaze.com/api)
+  - AniList (https://anilist.co/settings/developer)
 
 ### Setup
 
@@ -44,12 +49,13 @@ A Windows desktop utility that automatically sets folder icons for media content
      - `config.json` in the application directory
      - `%USERPROFILE%\.media_iconer\config.json`
 
-   Example `config.json`:
-   ```json
+   Example `config.json`:   ```json
    {
        "MEDIA_ROOT_DIR": "D:\\Media",
        "TMDB_API_KEY": "your_tmdb_api_key",
        "OMDB_API_KEY": "your_omdb_api_key",
+       "TVMAZE_API_KEY": "your_tvmaze_api_key",
+       "ANILIST_API_KEY": "your_anilist_api_key",
        "SCAN_ON_START": true,
        "DEBOUNCE_TIME": 5.0
    }

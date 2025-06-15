@@ -89,13 +89,14 @@ class MediaAPI:
             logger.error(f"Error getting TVmaze poster: {e}")
             return None
 
-    def get_poster(self, title: str, is_tv_show: bool = False) -> Optional[bytes]:
+    def get_poster(self, title: str, is_tv_show: bool = False, is_anime: bool = False) -> Optional[bytes]:
         """
         Get a poster image for the given title.
         
         Args:
             title: The title to search for
             is_tv_show: If True, prefer TV show APIs (TVmaze)
+            is_anime: If True, prefer anime APIs (AniList)
             
         Returns:
             Bytes of the poster image, or None if no poster was found
@@ -105,7 +106,8 @@ class MediaAPI:
             return self._get_mock_poster(title)
         
         # Check cache first
-        cache_key = f"poster_{title}_{'tv' if is_tv_show else 'movie'}"
+        cache_type = 'anime' if is_anime else ('tv' if is_tv_show else 'movie')
+        cache_key = f"poster_{title}_{cache_type}"
         if cache_key in self.response_cache and self.config.USE_CACHE:
             poster_path = self.cache_dir / f"{cache_key}.jpg"
             if poster_path.exists():
@@ -115,6 +117,13 @@ class MediaAPI:
                 except Exception as e:
                     logger.error(f"Error reading cached poster: {e}")
         
+        # Try AniList first for anime
+        if is_anime:
+            poster_data = self._get_anilist_poster(title)
+            if poster_data:
+                self._cache_poster(cache_key, poster_data)
+                return poster_data
+        
         # TV shows: try TVmaze first
         if is_tv_show:
             poster_data = self._get_tvmaze_poster(title)
@@ -122,16 +131,23 @@ class MediaAPI:
                 self._cache_poster(cache_key, poster_data)
                 return poster_data
         
-        # Try TMDB
-        if self.config.TMDB_API_KEY:
+        # Try TMDB for all types
+        if hasattr(self.config, 'TMDB_API_KEY') and self.config.TMDB_API_KEY:
             poster_data = self._get_tmdb_poster(title)
             if poster_data:
                 self._cache_poster(cache_key, poster_data)
                 return poster_data
         
-        # Try OMDB
-        if self.config.OMDB_API_KEY:
+        # Try OMDB for all types
+        if hasattr(self.config, 'OMDB_API_KEY') and self.config.OMDB_API_KEY:
             poster_data = self._get_omdb_poster(title)
+            if poster_data:
+                self._cache_poster(cache_key, poster_data)
+                return poster_data
+        
+        # If nothing found and it's not already tried as anime, try AniList as fallback
+        if not is_anime:
+            poster_data = self._get_anilist_poster(title)
             if poster_data:
                 self._cache_poster(cache_key, poster_data)
                 return poster_data
@@ -244,6 +260,85 @@ class MediaAPI:
             
         except Exception as e:
             logger.error(f"Error getting OMDB poster: {e}")
+            return None
+    
+    def _get_anilist_poster(self, title: str) -> Optional[bytes]:
+        """
+        Get a poster from AniList API (good for anime series and movies).
+        
+        Args:
+            title: The title to search for
+            
+        Returns:
+            Bytes of the poster image, or None if no poster was found
+        """
+        try:
+            # AniList uses GraphQL API
+            url = 'https://graphql.anilist.co'
+            query = '''
+            query ($search: String) {
+                Media (search: $search, type: ANIME) {
+                    id
+                    title {
+                        romaji
+                        english
+                        native
+                    }
+                    coverImage {
+                        large
+                        medium
+                        extraLarge
+                    }
+                }
+            }
+            '''
+            variables = {'search': title}
+            headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            }
+            
+            # Note: AniList doesn't require API keys for basic public queries
+            # We'll log some debugging info
+            logger.debug(f"Searching AniList for anime: {title}")
+            
+            response = requests.post(
+                url, 
+                json={'query': query, 'variables': variables},
+                headers=headers,
+                timeout=10
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"AniList search failed: {response.status_code} - {response.text}")
+                return None
+            
+            data = response.json()
+            media = data.get('data', {}).get('Media')
+            
+            if not media or not media.get('coverImage'):
+                logger.info(f"No AniList result found for: {title}")
+                return None
+            
+            # Get the poster image URL - try extraLarge first, then large, then medium
+            image_url = (media['coverImage'].get('extraLarge') or 
+                         media['coverImage'].get('large') or 
+                         media['coverImage'].get('medium'))
+            
+            if not image_url:
+                logger.info(f"No AniList poster found for: {title}")
+                return None
+            
+            logger.info(f"Found AniList poster for: {title}")
+            poster_response = requests.get(image_url, timeout=10)
+            if poster_response.status_code != 200:
+                logger.error(f"AniList poster download failed: {poster_response.status_code}")
+                return None
+            
+            return self._process_poster_image(poster_response.content)
+            
+        except Exception as e:
+            logger.error(f"Error getting AniList poster: {e}")
             return None
     
     def _process_poster_image(self, image_data: bytes) -> bytes:

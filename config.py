@@ -14,8 +14,7 @@ from typing import Dict, Any, Optional
 logger = logging.getLogger(__name__)
 
 class Config:
-    """Configuration handler for the Media Iconer application."""
-      # Default configuration values
+    """Configuration handler for the Media Iconer application."""    # Default configuration values
     DEFAULT_CONFIG = {
         # Media directory to monitor
         'MEDIA_ROOT_DIR': 'D:\\Media',
@@ -23,6 +22,8 @@ class Config:
         # API keys
         'TMDB_API_KEY': '',
         'OMDB_API_KEY': '',
+        'TVMAZE_API_KEY': '',
+        'ANILIST_API_KEY': '',
         
         # Cache settings
         'CACHE_DIR': os.path.join(os.path.expanduser('~'), '.media_iconer', 'cache'),
