@@ -11,8 +11,10 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-from win_icon import WinIconSetter
-from ffmpeg_icon_setter import FFmpegIconSetter
+from ..core.windows_icons import WinIconSetter
+from ..core.ffmpeg_handler import FFmpegIconSetter
+from ..apis.media_api import MediaAPI
+from ..utils.config import Config
 
 class SmartIconSetter:
     """
@@ -21,13 +23,31 @@ class SmartIconSetter:
     - For movies (single file): Sets file icon using FFmpeg
     """
     
-    def __init__(self):
-        """Initialize the smart icon setter."""
+    def __init__(self, config=None):
+        """Initialize the smart icon setter.
+        
+        Args:
+            config: Configuration object (optional, will create default if None)
+        """
         self.logger = logging.getLogger(__name__)
+        
+        # Store config
+        self.config = config
+        if config is None:
+            # Import here to avoid circular imports
+            self.config = Config()
         
         # Initialize icon setters
         self.folder_icon_setter = WinIconSetter()
         self.file_icon_setter = FFmpegIconSetter()
+        
+        # Initialize API if needed
+        self.media_api = None
+        if self.config:
+            try:
+                self.media_api = MediaAPI(self.config)
+            except Exception as e:
+                self.logger.warning(f"Failed to initialize MediaAPI: {e}")
         
         # Media file extensions
         self.media_extensions = {

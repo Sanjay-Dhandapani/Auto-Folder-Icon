@@ -1,89 +1,118 @@
 # Smart Media Icon System
 
-A Windows desktop utility that automatically sets custom icons for TV series folders and embeds artwork in movie files.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Windows](https://img.shields.io/badge/platform-Windows-blue.svg)](https://www.microsoft.com/windows)
+
+A professional Windows desktop utility that automatically sets custom icons for TV series folders and embeds artwork in movie files using intelligent media type detection.
 
 ## 🌟 Features
 
-### Smart Detection
-- **Automatically detects media type:**
-  - **TV Series**: Folders with season/episode subdirectories → Gets custom folder icons
-  - **Movies**: Folders with single media files → Gets artwork embedded in video files
+### 🧠 Smart Detection
+- **Automatic Media Type Detection**: Distinguishes between TV series and movies
+- **Intelligent Folder Analysis**: Recognizes season/episode structures
+- **Multi-Format Support**: Handles various video file formats
 
-### Dual Icon Strategy
-- **📺 TV Series**: Sets folder icons using Windows `desktop.ini` system
-- **🎬 Movies**: Embeds poster artwork directly into video files using FFmpeg
+### 🎨 Dual Icon Strategy
+- **📺 TV Series**: Custom folder icons using Windows `desktop.ini` system
+- **🎬 Movies**: Embedded artwork directly in video files using FFmpeg
+- **🖼️ High-Quality Icons**: Converts posters to proper `.ico` format
 
-### Multi-API Poster Fetching
+### 🌐 Multi-API Integration
 - **TMDB** (The Movie Database) - Primary source for movies and TV shows
-- **OMDb** (Open Movie Database) - Backup for movies and TV shows  
+- **OMDb** (Open Movie Database) - Backup for movies and TV shows
 - **TVmaze** - Specialized TV show database
 - **AniList** - Anime and manga database
-- **Mock API** - Generates placeholder posters for testing
+- **Smart Fallbacks** - Automatic failover between APIs
 
-### Professional Benefits
+### 🚀 Professional Benefits
 - **Windows Explorer**: TV series folders display custom poster icons
 - **Media Players**: Movies show embedded artwork (VLC, Windows Media Player, etc.)
 - **File Properties**: Right-click movie files show poster thumbnails
-- **Media Centers**: Plex, Jellyfin, Emby can use embedded artwork
-- **Organization**: Visual identification of media content at a glance
+- **Media Centers**: Plex, Jellyfin, Emby automatically use embedded artwork
+- **Visual Organization**: Instant visual identification of media content
 
-## 🛠️ Technical Implementation
+## 📸 Screenshots
 
-### For TV Series (Folder Icons)
+### Before
 ```
-Series Folder/
-├── desktop.ini          # Windows folder icon configuration
-├── folder.ico           # Converted poster in .ico format
-├── poster.jpg           # Original poster image
-├── Season1/
-│   ├── episode01.mp4
-│   └── episode02.mp4
-└── Season2/
-    ├── episode01.mp4
-    └── episode02.mp4
+📁 Media/
+├── 📁 GameOfThrones/          # Generic folder icon
+│   ├── 📁 Season1/
+│   └── 📁 Season2/
+└── 📁 Inception/              # Generic folder icon
+    └── 🎥 Inception.mp4       # No embedded artwork
 ```
 
-### For Movies (Embedded Artwork)
+### After
 ```
-Movie Folder/
-├── MovieTitle.mp4       # Video file with embedded poster artwork
-├── MovieTitle.mp4.backup # Backup of original file
-└── poster.jpg           # Original poster image
+📁 Media/
+├── 🖼️ GameOfThrones/           # ✅ Custom poster folder icon
+│   ├── 📁 Season1/
+│   ├── 📁 Season2/
+│   ├── 📄 desktop.ini          # ✅ Windows icon config
+│   ├── 🎨 folder.ico           # ✅ Poster in .ico format
+│   └── 🖼️ poster.jpg           # ✅ Original poster
+└── 📁 Inception/               # Standard folder
+    ├── 🎥 Inception.mp4        # ✅ Contains embedded poster artwork
+    ├── 🔄 Inception.mp4.backup # ✅ Original backup
+    └── 🖼️ poster.jpg           # ✅ Original poster
 ```
 
-## 📋 Prerequisites
+## 🛠️ Installation
 
-- **Python 3.7+**
-- **Windows 10+**
+### Prerequisites
+- **Windows 10+** (Windows 11 recommended)
+- **Python 3.8+** 
 - **FFmpeg** (for movie artwork embedding)
-- **API keys** (optional, system works with mock data)
 
-## 🚀 Installation
+### Quick Install
 
-### 1. Install FFmpeg
-```powershell
-# Using winget (recommended)
-winget install "FFmpeg (Essentials Build)"
+1. **Install FFmpeg**
+   ```bash
+   # Using winget (recommended)
+   winget install "FFmpeg (Essentials Build)"
+   ```
 
-# Or download from https://ffmpeg.org/download.html
-```
+2. **Install Smart Media Icon System**
+   ```bash
+   # Clone the repository
+   git clone https://github.com/yourusername/smart-media-icon.git
+   cd smart-media-icon
+   
+   # Install dependencies
+   pip install -r requirements.txt
+   
+   # Optional: Install as package
+   pip install -e .
+   ```
 
-### 2. Clone Repository
+3. **Quick Test**
+   ```bash
+   python main.py --help
+   ```
+
+## ⚡ Quick Start
+
+### Basic Usage
 ```bash
-git clone https://github.com/yourusername/smart-media-icon-system.git
-cd smart-media-icon-system
+# Process current directory
+python main.py
+
+# Process specific directory
+python main.py "C:\Media"
+
+# Verbose output
+python main.py "D:\Movies" --verbose
+
+# Custom configuration
+python main.py "E:\TV" --config myconfig.json
 ```
 
-### 3. Install Dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 4. Configure (Optional)
-Create `config.json`:
+### Configuration
+Create `config.json` (optional - system works with defaults):
 ```json
 {
-    "MEDIA_ROOT_DIR": "D:\\Media",
     "TMDB_API_KEY": "your_tmdb_api_key_here",
     "OMDB_API_KEY": "your_omdb_api_key_here",
     "TVMAZE_API_KEY": "your_tvmaze_api_key_here",
@@ -93,155 +122,131 @@ Create `config.json`:
 }
 ```
 
-## 🎯 Usage
+## 🎯 How It Works
 
-### Quick Start
-```bash
-# Test on sample media collection
-python test_smart_icons.py
-
-# Process specific directory
-python smart_icon_setter.py "C:\Path\To\Media"
-
-# Run main application
-python main.py
-```
-
-### Testing
-```bash
-# Create fresh test media structure
-python create_fresh_test_media.py
-
-# Run complete system test
-python test_complete_system.py
-
-# Verify results
-python final_verification.py
-```
-
-## 📊 How It Works
-
-### 1. Media Type Detection
+### 1. Smart Detection Algorithm
 ```python
 # Series Detection Logic
-if has_season_subdirectories:
-    media_type = "series"  → Apply folder icon
+if folder_contains_season_subdirectories:
+    media_type = "series"  → Apply folder icon strategy
     
 # Movie Detection Logic  
-elif has_single_media_file:
-    media_type = "movie"   → Embed artwork with FFmpeg
+elif folder_contains_single_media_file:
+    media_type = "movie"   → Apply FFmpeg artwork embedding
 ```
 
-### 2. API Poster Fetching
-```python
-# Intelligent API selection
-if media_type == "series":
-    poster = api.get_poster(title, is_tv_show=True)
-else:
-    poster = api.get_poster(title, is_tv_show=False)
+### 2. Processing Flow
+```mermaid
+graph TD
+    A[Scan Directory] --> B{Analyze Structure}
+    B -->|Has Seasons| C[TV Series Detected]
+    B -->|Single File| D[Movie Detected]
+    C --> E[Fetch TV Poster]
+    D --> F[Fetch Movie Poster]
+    E --> G[Set Folder Icon]
+    F --> H[Embed Artwork]
+    G --> I[Success]
+    H --> I
 ```
 
-### 3. Icon Application
-```python
-# For TV Series
-win_icon.set_folder_icon(series_path, poster_path)
-# Creates: desktop.ini + folder.ico
+### 3. Icon Strategies
 
-# For Movies  
-ffmpeg_setter.embed_artwork_in_media(movie_file, poster_path)
-# Embeds poster directly in video file
+#### TV Series (Folder Icons)
+- Downloads poster from API
+- Converts to `.ico` format
+- Creates `desktop.ini` configuration
+- Sets Windows folder attributes
+- **Result**: Custom folder icon in Windows Explorer
+
+#### Movies (Embedded Artwork)
+- Downloads movie poster
+- Uses FFmpeg to embed as video metadata
+- Creates backup of original file
+- **Result**: Media players show embedded poster
+
+## 📊 Supported Formats
+
+### Video Files
+- `.mp4`, `.mkv`, `.avi`, `.mov`, `.wmv`
+- `.flv`, `.webm`, `.m4v`, `.mpg`, `.mpeg`
+- `.m2v`, `.3gp`, `.ts`, `.mts`, `.vob`
+
+### Image Formats
+- `.jpg`, `.jpeg`, `.png`, `.bmp`, `.gif`
+- Automatic conversion to `.ico` for Windows
+
+## 🔧 Advanced Usage
+
+### Python API
+```python
+from smart_media_icon import SmartIconSetter, Config
+
+# Initialize with config
+config = Config('config.json')
+setter = SmartIconSetter(config)
+
+# Process directory
+success_count = setter.process_media_collection('/path/to/media')
+print(f"Processed {success_count} items successfully")
+```
+
+### Custom Configuration
+```python
+from smart_media_icon.utils import Config
+
+config = Config()
+config.USE_MOCK_API = True  # For testing
+config.USE_CACHE = False    # Disable caching
+
+setter = SmartIconSetter(config)
+```
+
+## 🧪 Testing
+
+### Run Examples
+```bash
+cd examples
+python usage_examples.py
+```
+
+### Manual Testing
+```bash
+# Create test structure
+mkdir test_media
+mkdir "test_media/GameOfThrones"
+mkdir "test_media/GameOfThrones/Season1"
+echo "test" > "test_media/GameOfThrones/Season1/episode01.mp4"
+
+# Process test directory
+python main.py test_media --verbose
 ```
 
 ## 📁 Project Structure
 
 ```
-smart-media-icon-system/
-├── main.py                    # Main application entry point
-├── smart_icon_setter.py       # Core smart detection logic
-├── media_api.py              # Multi-API poster fetching
-├── win_icon.py               # Windows folder icon setting
-├── ffmpeg_icon_setter.py     # FFmpeg artwork embedding
-├── config.py                 # Configuration management
-├── test_smart_icons.py       # Smart system testing
-├── test_complete_system.py   # End-to-end testing
-├── final_verification.py     # Results verification
-├── requirements.txt          # Python dependencies
-└── README.md                # This file
+smart-media-icon/
+├── 📁 src/smart_media_icon/       # Core package
+│   ├── 📁 core/                   # Core functionality
+│   │   ├── icon_setter.py         # Main orchestration
+│   │   ├── ffmpeg_handler.py      # FFmpeg operations
+│   │   └── windows_icons.py       # Windows folder icons
+│   ├── 📁 apis/                   # API integrations
+│   │   └── media_api.py           # Multi-API poster fetching
+│   ├── 📁 utils/                  # Utilities
+│   │   └── config.py              # Configuration management
+│   └── cli.py                     # Command line interface
+├── 📁 docs/                       # Documentation
+│   └── API.md                     # API reference
+├── 📁 examples/                   # Usage examples
+│   └── usage_examples.py          # Example scripts
+├── main.py                        # Main entry point
+├── setup.py                       # Package setup
+├── requirements.txt               # Dependencies
+├── config.json                    # Configuration file
+└── README.md                      # This file
 ```
 
-## 🔍 Example Results
-
-### Before Processing
-```
-Media/
-├── GameOfThrones/           # Generic folder icon
-│   ├── Season1/
-│   └── Season2/
-└── Inception/               # Generic folder icon
-    └── Inception.mp4        # No embedded artwork
-```
-
-### After Processing  
-```
-Media/
-├── GameOfThrones/           # ✅ Custom poster folder icon
-│   ├── desktop.ini          # ✅ Windows icon config
-│   ├── folder.ico           # ✅ Poster in .ico format
-│   ├── poster.jpg           # ✅ Original poster
-│   ├── Season1/
-│   └── Season2/ 
-└── Inception/               # Standard folder (movie inside)
-    ├── Inception.mp4        # ✅ Contains embedded poster artwork
-    ├── Inception.mp4.backup # ✅ Original backup
-    └── poster.jpg           # ✅ Original poster
-```
-
-## 🎮 Media Player Benefits
-
-### VLC Media Player
-- Displays embedded poster as video thumbnail
-- Shows artwork in playlist and media info
-
-### Windows Media Player  
-- Shows embedded poster in library view
-- Displays artwork during playback
-
-### Plex/Jellyfin/Emby
-- Automatically uses embedded artwork
-- No need for separate poster files
-
-### File Properties
-- Right-click → Properties shows poster thumbnail
-- Enhanced file identification
-
-## 🧪 Testing Results
-
-**Latest Test Results: 100% Success Rate**
-```
-📊 FINAL STATISTICS:
-  Total folders processed: 12
-  Series folders: 6/6 (100% success)
-  Movie folders: 6/6 (100% success)
-  Overall success: 12/12 (100%)
-
-✅ SERIES FOLDER ICONS:
-  ✅ AttackOnTitan        → ✓ desktop.ini  ✓ folder.ico  ✓ poster.jpg
-  ✅ BreakingBad          → ✓ desktop.ini  ✓ folder.ico  ✓ poster.jpg
-  ✅ GameOfThrones        → ✓ desktop.ini  ✓ folder.ico  ✓ poster.jpg
-  ✅ Naruto               → ✓ desktop.ini  ✓ folder.ico  ✓ poster.jpg
-  ✅ StrangerThings       → ✓ desktop.ini  ✓ folder.ico  ✓ poster.jpg
-  ✅ TheOffice            → ✓ desktop.ini  ✓ folder.ico  ✓ poster.jpg
-
-🎥 MOVIE FILE ARTWORK:
-  ✅ Avengers             → ✓ 125,809 bytes  ✓ artwork embedded
-  ✅ Inception            → ✓ 113,138 bytes  ✓ artwork embedded  
-  ✅ Interstellar         → ✓ 129,503 bytes  ✓ artwork embedded
-  ✅ SpiritedAway         → ✓ 144,816 bytes  ✓ artwork embedded
-  ✅ TheMatrix            → ✓ 96,373 bytes   ✓ artwork embedded
-  ✅ YourName             → ✓ 92,977 bytes   ✓ artwork embedded
-```
-
-## 🔧 Troubleshooting
+## 🔍 Troubleshooting
 
 ### FFmpeg Issues
 ```bash
@@ -253,40 +258,63 @@ winget install "FFmpeg (Essentials Build)"
 ```
 
 ### Folder Icons Not Showing
-1. Restart Windows Explorer: `Ctrl+Shift+Esc` → Restart "Windows Explorer"
-2. Check folder attributes: Should have System + Read-only
-3. Verify `desktop.ini` exists and has Hidden + System attributes
+1. **Restart Windows Explorer**: `Ctrl+Shift+Esc` → Restart "Windows Explorer"
+2. **Check Attributes**: Folder should have System + Read-only attributes
+3. **Verify Files**: Check `desktop.ini` exists with Hidden + System attributes
 
 ### API Rate Limits
-- The system includes intelligent rate limiting and caching
+- System includes intelligent rate limiting and caching
 - Mock API provides fallback when real APIs are unavailable
 - Cache prevents repeated API calls for same content
 
-### Supported Video Formats
-- `.mp4`, `.mkv`, `.avi`, `.mov`, `.wmv`, `.flv`, `.webm`, `.m4v`, `.mpg`, `.mpeg`
-
-## 🚀 Future Enhancements
-
-- [ ] Real-time folder monitoring
-- [ ] Batch processing GUI
-- [ ] Additional video format support
-- [ ] Custom poster upload option
-- [ ] Integration with media servers
-
-## 📄 License
-
-MIT License - See LICENSE file for details.
+### Permission Issues
+- Run as Administrator if accessing system directories
+- Ensure write permissions for target directories
+- Check antivirus software isn't blocking file operations
 
 ## 🤝 Contributing
 
+### Development Setup
+```bash
+# Clone repository
+git clone https://github.com/yourusername/smart-media-icon.git
+cd smart-media-icon
+
+# Install in development mode
+pip install -e .[dev]
+
+# Run tests
+pytest
+
+# Format code
+black src/
+```
+
+### Contribution Guidelines
 1. Fork the repository
 2. Create a feature branch
-3. Make changes and test thoroughly
-4. Submit a pull request
+3. Write tests for new functionality
+4. Ensure code follows style guidelines
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- **TMDB** for comprehensive movie/TV database
-- **FFmpeg** for powerful media processing
-- **Pillow** for image manipulation
-- **Windows API** for folder icon integration
+- **[TMDB](https://www.themoviedb.org/)** - Comprehensive movie and TV database
+- **[FFmpeg](https://ffmpeg.org/)** - Powerful multimedia framework
+- **[Pillow](https://pillow.readthedocs.io/)** - Image processing library
+- **Microsoft** - Windows API and desktop integration
+
+## 📞 Support
+
+- **Documentation**: [API Reference](docs/API.md)
+- **Examples**: [Usage Examples](examples/usage_examples.py)
+- **Issues**: [GitHub Issues](https://github.com/yourusername/smart-media-icon/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/smart-media-icon/discussions)
+
+---
+
+**Made with ❤️ for the media enthusiast community**
