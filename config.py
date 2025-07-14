@@ -33,12 +33,12 @@ class Config:
         'SCAN_ON_START': True,
         'DEBOUNCE_TIME': 5.0,  # seconds to wait after changes before processing
         'FORCE_UPDATE': False,  # force update of existing icons
-        
-        # Poster settings
+          # Poster settings
         'MAX_POSTER_SIZE': 1024,  # maximum width/height for posters
         
         # Mock API for demo/testing purposes
-        'USE_MOCK_API': True  # Set to True to use mock API responses instead of real APIs
+        'USE_MOCK_API': True,  # Set to True to use mock API responses instead of real APIs
+        'USE_MOCK_ON_FAILURE': True  # Use mock posters if all APIs fail
     }
     
     def __init__(self, config_file: Optional[str] = None):

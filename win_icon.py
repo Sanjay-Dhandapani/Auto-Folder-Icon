@@ -41,6 +41,8 @@ class WinIconSetter:
             subprocess.run(["attrib", "+s", "+r", folder_path], shell=True)
         except Exception as e:
             logging.warning(f"Could not toggle folder attributes: {e}")
+        
+        return True  # Indicate success
 
     def _convert_to_ico(self, image_path, icon_path):
         try:

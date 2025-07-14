@@ -1,3 +1,5 @@
 __pycache__
 %USERPROFILE%
 venv
+test_media*
+test*

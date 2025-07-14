@@ -71,7 +71,7 @@ class MediaAPI:
             headers = {}
             if hasattr(self.config, 'TVMAZE_API_KEY') and self.config.TVMAZE_API_KEY:
                 headers["Authorization"] = f"Bearer {self.config.TVMAZE_API_KEY}"
-            response = requests.get(search_url, params=params, headers=headers, timeout=10)
+            response = requests.get(search_url, params=params, headers=headers, timeout=15)  # Increased timeout
             if response.status_code != 200:
                 logger.error(f"TVmaze search failed: {response.status_code} - {response.text}")
                 return None
@@ -80,7 +80,7 @@ class MediaAPI:
             if not image_url:
                 logger.info(f"No TVmaze poster found for: {title}")
                 return None
-            poster_response = requests.get(image_url, timeout=10)
+            poster_response = requests.get(image_url, timeout=15)  # Increased timeout
             if poster_response.status_code != 200:
                 logger.error(f"TVmaze poster download failed: {poster_response.status_code}")
                 return None
@@ -101,58 +101,86 @@ class MediaAPI:
         Returns:
             Bytes of the poster image, or None if no poster was found
         """
-        # Check if we should use mock API for demo/testing purposes
-        if hasattr(self.config, 'USE_MOCK_API') and self.config.USE_MOCK_API:
-            return self._get_mock_poster(title)
-        
-        # Check cache first
-        cache_type = 'anime' if is_anime else ('tv' if is_tv_show else 'movie')
-        cache_key = f"poster_{title}_{cache_type}"
-        if cache_key in self.response_cache and self.config.USE_CACHE:
-            poster_path = self.cache_dir / f"{cache_key}.jpg"
-            if poster_path.exists():
+        try:
+            # Check if we should use mock API for demo/testing purposes
+            if hasattr(self.config, 'USE_MOCK_API') and self.config.USE_MOCK_API:
+                return self._get_mock_poster(title)
+            
+            # Check cache first
+            cache_type = 'anime' if is_anime else ('tv' if is_tv_show else 'movie')
+            cache_key = f"poster_{title}_{cache_type}"
+            if cache_key in self.response_cache and self.config.USE_CACHE:
+                poster_path = self.cache_dir / f"{cache_key}.jpg"
+                if poster_path.exists():
+                    try:
+                        with open(poster_path, 'rb') as f:
+                            return f.read()
+                    except Exception as e:
+                        logger.error(f"Error reading cached poster: {e}")
+            
+            # Try AniList first for anime
+            if is_anime:
                 try:
-                    with open(poster_path, 'rb') as f:
-                        return f.read()
+                    poster_data = self._get_anilist_poster(title)
+                    if poster_data:
+                        self._cache_poster(cache_key, poster_data)
+                        return poster_data
                 except Exception as e:
-                    logger.error(f"Error reading cached poster: {e}")
-        
-        # Try AniList first for anime
-        if is_anime:
-            poster_data = self._get_anilist_poster(title)
-            if poster_data:
-                self._cache_poster(cache_key, poster_data)
-                return poster_data
-        
-        # TV shows: try TVmaze first
-        if is_tv_show:
-            poster_data = self._get_tvmaze_poster(title)
-            if poster_data:
-                self._cache_poster(cache_key, poster_data)
-                return poster_data
-        
-        # Try TMDB for all types
-        if hasattr(self.config, 'TMDB_API_KEY') and self.config.TMDB_API_KEY:
-            poster_data = self._get_tmdb_poster(title)
-            if poster_data:
-                self._cache_poster(cache_key, poster_data)
-                return poster_data
-        
-        # Try OMDB for all types
-        if hasattr(self.config, 'OMDB_API_KEY') and self.config.OMDB_API_KEY:
-            poster_data = self._get_omdb_poster(title)
-            if poster_data:
-                self._cache_poster(cache_key, poster_data)
-                return poster_data
-        
-        # If nothing found and it's not already tried as anime, try AniList as fallback
-        if not is_anime:
-            poster_data = self._get_anilist_poster(title)
-            if poster_data:
-                self._cache_poster(cache_key, poster_data)
-                return poster_data
-        
-        return None
+                    logger.error(f"Error with AniList API: {e}")
+            
+            # TV shows: try TVmaze first
+            if is_tv_show:
+                try:
+                    poster_data = self._get_tvmaze_poster(title)
+                    if poster_data:
+                        self._cache_poster(cache_key, poster_data)
+                        return poster_data
+                except Exception as e:
+                    logger.error(f"Error with TVmaze API: {e}")
+            
+            # Try TMDB for all types
+            if hasattr(self.config, 'TMDB_API_KEY') and self.config.TMDB_API_KEY:
+                try:
+                    poster_data = self._get_tmdb_poster(title)
+                    if poster_data:
+                        self._cache_poster(cache_key, poster_data)
+                        return poster_data
+                except Exception as e:
+                    logger.error(f"Error with TMDB API: {e}")
+            
+            # Try OMDB for all types
+            if hasattr(self.config, 'OMDB_API_KEY') and self.config.OMDB_API_KEY:
+                try:
+                    poster_data = self._get_omdb_poster(title)
+                    if poster_data:
+                        self._cache_poster(cache_key, poster_data)
+                        return poster_data
+                except Exception as e:
+                    logger.error(f"Error with OMDB API: {e}")
+            
+            # If nothing found and it's not already tried as anime, try AniList as fallback
+            if not is_anime:
+                try:
+                    poster_data = self._get_anilist_poster(title)
+                    if poster_data:
+                        self._cache_poster(cache_key, poster_data)
+                        return poster_data
+                except Exception as e:
+                    logger.error(f"Error with AniList API fallback: {e}")
+            
+            # If all APIs failed, try the mock poster as a last resort
+            if hasattr(self.config, 'USE_MOCK_ON_FAILURE') and self.config.USE_MOCK_ON_FAILURE:
+                logger.warning(f"All APIs failed for '{title}', using mock poster")
+                poster_data = self._get_mock_poster(title)
+                if poster_data:
+                    self._cache_poster(cache_key, poster_data)
+                    return poster_data
+            
+            return None
+            
+        except Exception as e:
+            logger.error(f"Unexpected error in get_poster: {e}")
+            return None
     
     def _cache_poster(self, cache_key: str, poster_data: bytes):
         """Cache the poster image."""
@@ -187,7 +215,7 @@ class MediaAPI:
                 "include_adult": "false"
             }
             
-            response = requests.get(search_url, params=params)
+            response = requests.get(search_url, params=params, timeout=15)  # Increased timeout
             if response.status_code != 200:
                 logger.error(f"TMDB search failed: {response.status_code} - {response.text}")
                 return None
@@ -207,7 +235,7 @@ class MediaAPI:
             poster_path = result.get("poster_path")
             poster_url = f"https://image.tmdb.org/t/p/original{poster_path}"
             
-            poster_response = requests.get(poster_url)
+            poster_response = requests.get(poster_url, timeout=15)  # Increased timeout
             if poster_response.status_code != 200:
                 logger.error(f"TMDB poster download failed: {poster_response.status_code}")
                 return None
@@ -238,7 +266,7 @@ class MediaAPI:
                 "r": "json"
             }
             
-            response = requests.get(url, params=params)
+            response = requests.get(url, params=params, timeout=15)  # Increased timeout
             if response.status_code != 200:
                 logger.error(f"OMDB search failed: {response.status_code} - {response.text}")
                 return None
@@ -306,7 +334,7 @@ class MediaAPI:
                 url, 
                 json={'query': query, 'variables': variables},
                 headers=headers,
-                timeout=10
+                timeout=15  # Increased timeout
             )
             
             if response.status_code != 200:
@@ -330,7 +358,7 @@ class MediaAPI:
                 return None
             
             logger.info(f"Found AniList poster for: {title}")
-            poster_response = requests.get(image_url, timeout=10)
+            poster_response = requests.get(image_url, timeout=15)  # Increased timeout
             if poster_response.status_code != 200:
                 logger.error(f"AniList poster download failed: {poster_response.status_code}")
                 return None

@@ -10,5 +10,6 @@
     "DEBOUNCE_TIME": 1.0,
     "FORCE_UPDATE": true,
     "MAX_POSTER_SIZE": 1024,
-    "USE_MOCK_API": false
+    "USE_MOCK_API": false,
+    "USE_MOCK_ON_FAILURE": true
 }
