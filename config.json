@@ -1,15 +1,63 @@
 {
-    "MEDIA_ROOT_DIR": "d:\\PROJECTS AND FILES\\CustomIcon\\test_media_new2",
-    "TMDB_API_KEY": "11f55c4fd9dfad72e43b1ed0dd822734",
-    "OMDB_API_KEY": "1d276b93",
-    "TVMAZE_API_KEY": "JitCu-HpN4p3-rErKGFImD7njPdxFV_X",
-    "ANILIST_API_KEY": "7sNo65ylLMUD4TekDZuynf8qUW77hRlOc67eaAi5",
-    "CACHE_DIR": "%USERPROFILE%\\.media_iconer\\cache",
+    "MEDIA_ROOT_DIR": "D:\\Media",
+    "TMDB_API_KEY": "test_key",
+    "OMDB_API_KEY": "",
+    "TVMAZE_API_KEY": "",
+    "ANILIST_API_KEY": "",
+    "CACHE_DIR": "C:\\Users\\sanja\\.media_iconer\\cache",
     "USE_CACHE": true,
     "SCAN_ON_START": true,
     "DEBOUNCE_TIME": 1.0,
     "FORCE_UPDATE": true,
     "MAX_POSTER_SIZE": 1024,
-    "USE_MOCK_API": false,
-    "USE_MOCK_ON_FAILURE": true
+    "USE_MOCK_API": true,
+    "USE_MOCK_ON_FAILURE": true,
+    "tray_settings": {
+        "TRAY_ENABLED": true,
+        "START_WITH_WINDOWS": false,
+        "START_MINIMIZED": true,
+        "CLOSE_TO_TRAY": true,
+        "AUTO_MONITOR_ENABLED": true,
+        "MONITORED_DIRECTORIES": [
+            {
+                "path": "C:\\Users\\sanja",
+                "recursive": true,
+                "enabled": true,
+                "added_date": "2025-07-14T13:41:52.822628"
+            },
+            {
+                "path": "D:/MOVIES",
+                "enabled": true,
+                "recursive": true
+            }
+        ],
+        "MONITOR_RECURSIVE": true,
+        "DEBOUNCE_TIME": 5.0,
+        "MAX_CONCURRENT_PROCESSING": 3,
+        "RECURSIVE_DEPTH_LIMIT": 5,
+        "BATCH_SIZE": 50,
+        "RETRY_ATTEMPTS": 3,
+        "MONITOR_HIDDEN_FOLDERS": false,
+        "EXCLUDE_PATTERNS": [
+            "*.tmp",
+            "*.part",
+            "*.crdownload"
+        ],
+        "SHOW_NOTIFICATIONS": true,
+        "NOTIFICATION_DURATION": 5000,
+        "SOUND_ENABLED": false,
+        "DETAILED_NOTIFICATIONS": false,
+        "REMEMBER_WINDOW_POSITION": true,
+        "THEME": "system",
+        "LANGUAGE": "en",
+        "WINDOW_POSITIONS": {},
+        "CACHE_SIZE_LIMIT": 1000,
+        "AUTO_CLEANUP_CACHE": true,
+        "LOG_RETENTION_DAYS": 30,
+        "MAX_EVENTS_PER_SECOND": 10,
+        "PROCESSING_PRIORITY": "normal",
+        "SKIP_EXISTING_ICONS": false,
+        "BACKUP_ORIGINAL_FILES": true,
+        "VERIFY_OPERATIONS": true
+    }
 }
